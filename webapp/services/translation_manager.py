@@ -7,36 +7,18 @@ Manages 3-tier subscription system:
 """
 
 import os
-import sys
 from pathlib import Path
 from typing import Optional, Dict
 from enum import Enum
 
-# Add parent directories to path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-
-# Import document translator
-from document_translator import (
-    DocumentTranslator,
+# Import our translation services
+from core.translation_services import (
     GoogleTranslateService,
-    DeepLTranslateService
-)
-
-# Import AI translator
-from ai_translator_addon import (
+    DeepLTranslateService,
     ChatGPTTranslationService,
     ClaudeTranslationService,
     GeminiTranslationService
 )
-
-# Import image translator components
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / 'image-translator' / 'src' / 'image-translator'))
-try:
-    from core.pipeline import TranslationPipeline
-    IMAGE_TRANSLATOR_AVAILABLE = True
-except ImportError:
-    IMAGE_TRANSLATOR_AVAILABLE = False
-    print("Warning: Image translator not available")
 
 
 class UserTier(Enum):
@@ -54,7 +36,6 @@ class TranslationManager:
     def __init__(self):
         """Initialize translation manager"""
         self.config = self._load_config()
-        self.image_pipeline_cache = {}
 
     def _load_config(self) -> Dict:
         """Load configuration from environment or defaults"""
@@ -90,7 +71,8 @@ class TranslationManager:
             # DeepL tier: DeepL API
             api_key = self.config.get('deepl_api_key')
             if not api_key:
-                raise ValueError("DeepL API key not configured. Please set DEEPL_API_KEY environment variable.")
+                print("Warning: DeepL API key not configured, falling back to Google Translate")
+                return GoogleTranslateService(source_lang=source_lang, target_lang=target_lang)
 
             return DeepLTranslateService(
                 source_lang=source_lang,
@@ -105,7 +87,8 @@ class TranslationManager:
             if ai_service == 'chatgpt':
                 api_key = self.config.get('openai_api_key')
                 if not api_key:
-                    raise ValueError("OpenAI API key not configured. Please set OPENAI_API_KEY environment variable.")
+                    print("Warning: OpenAI API key not configured, falling back to Google Translate")
+                    return GoogleTranslateService(source_lang=source_lang, target_lang=target_lang)
 
                 return ChatGPTTranslationService(
                     source_lang=source_lang,
@@ -117,7 +100,8 @@ class TranslationManager:
             elif ai_service == 'claude':
                 api_key = self.config.get('anthropic_api_key')
                 if not api_key:
-                    raise ValueError("Anthropic API key not configured. Please set ANTHROPIC_API_KEY environment variable.")
+                    print("Warning: Anthropic API key not configured, falling back to Google Translate")
+                    return GoogleTranslateService(source_lang=source_lang, target_lang=target_lang)
 
                 return ClaudeTranslationService(
                     source_lang=source_lang,
@@ -129,7 +113,8 @@ class TranslationManager:
             elif ai_service == 'gemini':
                 api_key = self.config.get('google_api_key')
                 if not api_key:
-                    raise ValueError("Google API key not configured. Please set GOOGLE_API_KEY environment variable.")
+                    print("Warning: Google API key not configured, falling back to Google Translate")
+                    return GoogleTranslateService(source_lang=source_lang, target_lang=target_lang)
 
                 return GeminiTranslationService(
                     source_lang=source_lang,
@@ -139,7 +124,8 @@ class TranslationManager:
                 )
 
             else:
-                raise ValueError(f"Unknown AI service: {ai_service}")
+                print(f"Warning: Unknown AI service '{ai_service}', falling back to Google Translate")
+                return GoogleTranslateService(source_lang=source_lang, target_lang=target_lang)
 
         else:
             raise ValueError(f"Unknown tier: {tier}")
@@ -177,6 +163,9 @@ class TranslationManager:
         """
         Translate document (PDF, Word, Excel, PowerPoint)
 
+        Note: Document translation requires additional dependencies.
+        For now, this is a placeholder that returns an error message.
+
         Args:
             input_path: Path to input document
             source_lang: Source language code
@@ -187,55 +176,10 @@ class TranslationManager:
         Returns:
             Path to translated document
         """
-        # Get translation service based on tier
-        translation_service = self._get_translation_service(tier, source_lang, target_lang)
-
-        # Create document translator with the service
-        # We need to manually construct the translator
-        from document_translator import PDFTranslator, ExcelTranslator, WordTranslator, PowerPointTranslator
-
-        try:
-            import pymupdf
-        except ImportError:
-            pymupdf = None
-
-        try:
-            from openpyxl import load_workbook
-        except ImportError:
-            load_workbook = None
-
-        try:
-            from docx import Document
-        except ImportError:
-            Document = None
-
-        try:
-            from pptx import Presentation
-        except ImportError:
-            Presentation = None
-
-        # Create custom translator instance
-        translator = DocumentTranslator.__new__(DocumentTranslator)
-        translator.translation_service = translation_service
-        translator.pdf_translator = PDFTranslator(translation_service) if pymupdf else None
-        translator.excel_translator = ExcelTranslator(translation_service) if load_workbook else None
-        translator.word_translator = WordTranslator(translation_service) if Document else None
-        translator.ppt_translator = PowerPointTranslator(translation_service) if Presentation else None
-        translator.translate_document = DocumentTranslator.translate_document.__get__(translator, DocumentTranslator)
-        translator._print_summary = DocumentTranslator._print_summary.__get__(translator, DocumentTranslator)
-
-        # Generate output path
-        input_file = Path(input_path)
-        output_path = str(input_file.parent / f"{input_file.stem}_translated{input_file.suffix}")
-
-        # Translate
-        translator.translate_document(
-            input_path=input_path,
-            output_path=output_path,
-            preserve_original=preserve_original
+        raise NotImplementedError(
+            "Document translation requires additional dependencies. "
+            "Please install: pip install pymupdf python-docx openpyxl python-pptx"
         )
-
-        return output_path
 
     def translate_image(
         self,
@@ -247,6 +191,9 @@ class TranslationManager:
         """
         Translate image using OCR + translation + rendering
 
+        Note: Image translation requires additional dependencies.
+        For now, this is a placeholder that returns an error message.
+
         Args:
             input_path: Path to input image
             source_lang: Source language code
@@ -256,81 +203,10 @@ class TranslationManager:
         Returns:
             Path to translated image
         """
-        if not IMAGE_TRANSLATOR_AVAILABLE:
-            raise ImportError("Image translator not available. Please install image-translator dependencies.")
-
-        # Get translation service based on tier
-        translation_service = self._get_translation_service(tier, source_lang, target_lang)
-
-        # Create image translation pipeline config
-        config = {
-            'ocr': {
-                'languages': self._get_ocr_languages(source_lang),
-                'use_gpu': False
-            },
-            'translation': {
-                'engine': 'custom',
-                'source_lang': source_lang,
-                'target_lang': target_lang,
-                'cache_translations': True
-            },
-            'inpainting': {
-                'method': 'telea',
-                'radius': 5
-            },
-            'fonts': {
-                'chinese_simplified': '/System/Library/Fonts/PingFang.ttc',
-                'chinese_traditional': '/System/Library/Fonts/PingFang.ttc',
-                'english': '/System/Library/Fonts/Helvetica.ttc',
-                'japanese': '/System/Library/Fonts/Hiragino Sans GB.ttc',
-                'korean': '/System/Library/Fonts/AppleSDGothicNeo.ttc'
-            },
-            'rendering': {
-                'default_font_size': 12,
-                'auto_font_size': True
-            }
-        }
-
-        # Create or get cached pipeline
-        cache_key = f"{tier.value}_{source_lang}_{target_lang}"
-        if cache_key not in self.image_pipeline_cache:
-            pipeline = TranslationPipeline(config)
-            # Inject our translation service
-            pipeline.translator.translator = translation_service
-            self.image_pipeline_cache[cache_key] = pipeline
-        else:
-            pipeline = self.image_pipeline_cache[cache_key]
-
-        # Generate output path
-        input_file = Path(input_path)
-        output_path = str(input_file.parent / f"{input_file.stem}_translated{input_file.suffix}")
-
-        # Translate image
-        pipeline.translate_image(
-            input_path=input_path,
-            output_path=output_path,
-            visualize=False
+        raise NotImplementedError(
+            "Image translation requires additional dependencies. "
+            "Please install: pip install paddlepaddle paddleocr opencv-python"
         )
-
-        return output_path
-
-    def _get_ocr_languages(self, lang_code: str) -> list:
-        """Convert language code to OCR language list"""
-        lang_map = {
-            'en': ['en'],
-            'zh-CN': ['ch', 'en'],
-            'zh-TW': ['chinese_cht', 'en'],
-            'ja': ['japan', 'en'],
-            'ko': ['korean', 'en'],
-            'ar': ['arabic', 'en'],
-            'fr': ['french', 'en'],
-            'de': ['german', 'en'],
-            'es': ['spanish', 'en'],
-            'pt': ['portuguese', 'en'],
-            'ru': ['cyrillic', 'en'],
-            'it': ['italian', 'en']
-        }
-        return lang_map.get(lang_code, ['en'])
 
     def get_tier_limits(self, tier: UserTier) -> Dict:
         """
