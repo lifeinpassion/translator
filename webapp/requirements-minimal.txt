@@ -1,0 +1,19 @@
+# Minimal requirements for text translation only
+# Install with: pip install -r requirements-minimal.txt
+
+# Web Framework
+Flask==3.0.0
+flask-cors==4.0.0
+Werkzeug==3.0.1
+
+# Translation
+deep-translator==1.11.4
+
+# Language Detection
+langdetect==1.0.9
+
+# Utilities
+python-dotenv==1.0.0
+
+# Security (for password hashing)
+# Already included in Werkzeug
