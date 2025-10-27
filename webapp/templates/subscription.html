@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subscription - Universal Translator</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .subscription-page {
+            padding: 3rem 0;
+        }
+        .page-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        .page-header h1 {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+        .current-plan {
+            background-color: var(--bg-white);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 3rem;
+            box-shadow: var(--shadow-lg);
+        }
+        .current-plan h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .plan-details {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        .plan-stat {
+            padding: 1rem;
+            background-color: var(--bg-light);
+            border-radius: 8px;
+        }
+        .plan-stat-label {
+            font-size: 0.875rem;
+            color: var(--text-light);
+            margin-bottom: 0.25rem;
+        }
+        .plan-stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+        }
+        .pricing-card {
+            background-color: var(--bg-white);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: var(--shadow-lg);
+            position: relative;
+            transition: transform 0.2s;
+        }
+        .pricing-card:hover {
+            transform: translateY(-5px);
+        }
+        .pricing-card.featured {
+            border: 3px solid var(--secondary-color);
+        }
+        .pricing-card.current {
+            border: 3px solid var(--success-color);
+        }
+        .popular-badge {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--warning-color);
+            color: white;
+            padding: 0.25rem 1rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+        .current-badge {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--success-color);
+            color: white;
+            padding: 0.25rem 1rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+        .pricing-header {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+        .pricing-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        .pricing-price {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--secondary-color);
+        }
+        .pricing-price span {
+            font-size: 1rem;
+            color: var(--text-light);
+        }
+        .pricing-features {
+            list-style: none;
+            margin: 1.5rem 0;
+        }
+        .pricing-features li {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .pricing-features li:last-child {
+            border-bottom: none;
+        }
+        .pricing-features li::before {
+            content: "✓";
+            color: var(--success-color);
+            font-weight: 700;
+            margin-right: 0.5rem;
+        }
+        @media (max-width: 768px) {
+            .pricing-grid {
+                grid-template-columns: 1fr;
+            }
+            .plan-details {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <h1>Universal Translator</h1>
+                </div>
+                <nav class="nav">
+                    <a href="/" class="btn btn-outline">Back to Translator</a>
+                    <a href="/logout" class="btn btn-secondary">Logout</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="subscription-page">
+        <div class="container">
+            <div class="page-header">
+                <h1>Manage Your Subscription</h1>
+                <p>Choose the plan that fits your translation needs</p>
+            </div>
+
+            <!-- Current Plan Status -->
+            <div class="current-plan">
+                <h2>Current Plan: <span class="tier-badge {{ user.tier.value }}">{{ user.tier.value | upper }}</span></h2>
+                <div class="plan-details">
+                    <div class="plan-stat">
+                        <div class="plan-stat-label">Characters Translated</div>
+                        <div class="plan-stat-value">{{ "{:,}".format(user.characters_translated_month) }}</div>
+                    </div>
+                    <div class="plan-stat">
+                        <div class="plan-stat-label">Documents Translated</div>
+                        <div class="plan-stat-value">{{ user.documents_translated_month }}</div>
+                    </div>
+                    <div class="plan-stat">
+                        <div class="plan-stat-label">Images Translated</div>
+                        <div class="plan-stat-value">{{ user.images_translated_month }}</div>
+                    </div>
+                    <div class="plan-stat">
+                        <div class="plan-stat-label">Text Translations</div>
+                        <div class="plan-stat-value">{{ user.texts_translated_month }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pricing Plans -->
+            <div class="pricing-grid">
+                <!-- Free Plan -->
+                <div class="pricing-card {% if user.tier.value == 'free' %}current{% endif %}">
+                    {% if user.tier.value == 'free' %}
+                    <div class="current-badge">CURRENT PLAN</div>
+                    {% endif %}
+
+                    <div class="pricing-header">
+                        <div class="pricing-title">Free</div>
+                        <div class="pricing-price">$0 <span>/month</span></div>
+                    </div>
+
+                    <ul class="pricing-features">
+                        <li>Google Translate</li>
+                        <li>500K characters/month</li>
+                        <li>3 documents/month</li>
+                        <li>10 images/month</li>
+                        <li>10MB max file size</li>
+                        <li>Basic support</li>
+                    </ul>
+
+                    {% if user.tier.value != 'free' %}
+                    <button class="btn btn-outline" onclick="changePlan('free')" style="width: 100%;">Downgrade</button>
+                    {% else %}
+                    <button class="btn btn-outline" disabled style="width: 100%;">Current Plan</button>
+                    {% endif %}
+                </div>
+
+                <!-- DeepL Pro Plan -->
+                <div class="pricing-card featured {% if user.tier.value == 'deepl' %}current{% endif %}">
+                    <div class="popular-badge">POPULAR</div>
+                    {% if user.tier.value == 'deepl' %}
+                    <div class="current-badge">CURRENT PLAN</div>
+                    {% endif %}
+
+                    <div class="pricing-header">
+                        <div class="pricing-title">DeepL Pro</div>
+                        <div class="pricing-price">$9.99 <span>/month</span></div>
+                    </div>
+
+                    <ul class="pricing-features">
+                        <li>DeepL API Translation</li>
+                        <li>5M characters/month</li>
+                        <li>50 documents/month</li>
+                        <li>100 images/month</li>
+                        <li>50MB max file size</li>
+                        <li>Priority processing</li>
+                        <li>Email support</li>
+                    </ul>
+
+                    {% if user.tier.value == 'deepl' %}
+                    <button class="btn btn-outline" disabled style="width: 100%;">Current Plan</button>
+                    {% elif user.tier.value == 'free' %}
+                    <button class="btn btn-primary" onclick="changePlan('deepl')" style="width: 100%;">Upgrade Now</button>
+                    {% else %}
+                    <button class="btn btn-outline" onclick="changePlan('deepl')" style="width: 100%;">Downgrade</button>
+                    {% endif %}
+                </div>
+
+                <!-- AI Premium Plan -->
+                <div class="pricing-card {% if user.tier.value == 'ai' %}current{% endif %}">
+                    {% if user.tier.value == 'ai' %}
+                    <div class="current-badge">CURRENT PLAN</div>
+                    {% endif %}
+
+                    <div class="pricing-header">
+                        <div class="pricing-title">AI Premium</div>
+                        <div class="pricing-price">$29.99 <span>/month</span></div>
+                    </div>
+
+                    <ul class="pricing-features">
+                        <li>AI-Powered (GPT/Claude)</li>
+                        <li>Unlimited characters</li>
+                        <li>Unlimited documents</li>
+                        <li>Unlimited images</li>
+                        <li>100MB max file size</li>
+                        <li>Best translation quality</li>
+                        <li>Batch processing</li>
+                        <li>API access</li>
+                        <li>Priority support</li>
+                    </ul>
+
+                    {% if user.tier.value == 'ai' %}
+                    <button class="btn btn-outline" disabled style="width: 100%;">Current Plan</button>
+                    {% else %}
+                    <button class="btn btn-primary" onclick="changePlan('ai')" style="width: 100%;">Upgrade Now</button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 Universal Translator. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        async function changePlan(newTier) {
+            if (!confirm(`Are you sure you want to change your plan to ${newTier.toUpperCase()}?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/upgrade-subscription', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ tier: newTier })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert('Subscription updated successfully!');
+                    window.location.reload();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                alert('Network error: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>
