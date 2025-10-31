@@ -1,0 +1,44 @@
+# Universal Translator Web App Requirements
+
+# Web Framework
+Flask==3.0.0
+flask-cors==4.0.0
+Werkzeug==3.0.1
+
+# Document Translation
+pymupdf==1.23.8
+python-docx==1.1.0
+openpyxl==3.1.2
+python-pptx==0.6.23
+
+# Free Translation (Google Translate)
+deep-translator==1.11.4
+
+# DeepL API (Tier 2)
+deepl==1.17.0
+
+# AI Translation (Tier 3)
+openai==1.6.1
+anthropic==0.8.1
+google-generativeai==0.3.2
+
+# Image Translation
+opencv-python==4.9.0.80
+opencv-contrib-python==4.9.0.80
+numpy==1.26.3
+paddlepaddle==2.6.0
+paddleocr==2.7.0.3
+Pillow==10.2.0
+
+# Language Detection
+langdetect==1.0.9
+
+# Utilities
+requests==2.31.0
+tenacity==8.2.3
+python-dotenv==1.0.0
+
+# Development (optional)
+pytest==7.4.3
+black==23.12.1
+flake8==7.0.0
